@@ -58,13 +58,18 @@ footer{font-size:13px;color:#7c7d87;margin-top:26px}
 </div><div><h2>Aperçu</h2><div class="preview" id="preview"><span class="placeholder">Votre image apparaît ici</span></div></div></div>
 </section>
 <section id="anim" class="panel hidden">
-<h2>Enregistrer un SVG animé</h2>
-<p>Cette méthode enregistre le rendu réel de l'animation dans votre navigateur. Elle fonctionne aussi pour les animations CSS qui ne se convertissent pas correctement avec un simple export PNG.</p>
-<div class="notice">Cliquez sur « Enregistrer », puis choisissez <b>cet onglet</b> dans la fenêtre de partage du navigateur. L'enregistrement est local : aucune vidéo n'est envoyée à TOIMG. Le navigateur peut demander l'autorisation de partager l'écran.</div>
-<p class="note">Ouvrez d'abord votre fichier SVG animé dans un onglet du navigateur, puis revenez ici pour lancer la capture. Vous pouvez sélectionner cet onglet SVG lors du partage. Le format MP4 est utilisé lorsque votre navigateur sait l’enregistrer ; sinon un export WebM est proposé. Aucun fichier WebM n’est renommé artificiellement en MP4.</p>
-<div class="form-row"><div><label for="seconds">Durée (secondes)</label><input type="number" min="1" max="60" id="seconds" value="4"></div><div><label for="fps">Images/seconde souhaitées</label><select id="fps"><option>30</option><option>60</option><option>24</option></select></div></div>
-<div class="buttons"><button class="primary" id="record">Enregistrer la vidéo</button><button class="secondary" id="stop" disabled>Arrêter</button></div>
+<h2><i data-lucide="film"></i> SVG animé → vidéo</h2>
+<p>Importe directement un ou plusieurs SVG animés. TOIMG capture le dessin vectoriel dans son propre moteur de rendu, <strong>sans enregistrer ton écran</strong>.</p>
+<div class="drop" id="anim-drop"><i data-lucide="upload-cloud"></i><strong>Choisir des SVG animés</strong><p>Ou glisser-déposer plusieurs fichiers</p></div>
+<input id="anim-file" type="file" accept=".svg,image/svg+xml" multiple hidden>
+<p class="status" id="anim-file-status" aria-live="polite">Aucun SVG animé importé.</p>
+<ul class="file-list" id="anim-file-list"></ul>
+<div class="form-row"><div><label for="seconds">Durée par fichier (secondes)</label><input type="number" min="1" max="60" id="seconds" value="4"></div><div><label for="fps">Images/seconde</label><select id="fps"><option>30</option><option>60</option><option>24</option></select></div></div>
+<div class="form-row"><div><label for="anim-width">Largeur vidéo (px)</label><input id="anim-width" type="number" min="64" max="3840" value="1280"></div><div><label for="anim-height">Hauteur vidéo (px)</label><input id="anim-height" type="number" min="64" max="2160" value="720"></div></div>
+<div class="notice">Export MP4 quand Chrome le prend en charge, sinon WebM. Le moteur capture les animations CSS courantes ; certains effets SVG complexes ou ressources externes peuvent ne pas être restitués.</div>
+<div class="buttons" style="margin-top:18px"><button class="primary" id="record" disabled><i data-lucide="download"></i> Convertir et télécharger</button><button class="secondary" id="stop" disabled><i data-lucide="square"></i> Arrêter</button></div>
 <p class="status" id="record-status" aria-live="polite"></p>
+<div id="svg-stage" aria-hidden="true" style="position:fixed;left:-10000px;top:0;width:1280px;height:720px;pointer-events:none;overflow:hidden"></div>
 </section>
 <section id="url" class="panel hidden">
 <h2>Image → URL publique</h2>
@@ -156,34 +161,121 @@ footer{font-size:13px;color:#7c7d87;margin-top:26px}
     }catch(e){$('status').textContent='Impossible de créer le ZIP : '+e.message;}
     finally{$('export').disabled=false;}
   });
-  async function stopRecording(){
-    if(recordTimer)clearTimeout(recordTimer);
-    if(recorder&&recorder.state!=='inactive')recorder.stop();
-    if(recordStream)recordStream.getTracks().forEach(t=>t.stop());
-    $('record').disabled=false;$('stop').disabled=true;
+  let animFiles=[],abortRecording=false,activeRecorder=null,activeStream=null;
+  $('anim-drop').addEventListener('click',()=>$('anim-file').click());
+  $('anim-file').addEventListener('change',e=>loadAnimations(e.target.files));
+  $('anim-drop').addEventListener('dragover',e=>{e.preventDefault();$('anim-drop').classList.add('drag')});
+  $('anim-drop').addEventListener('dragleave',()=>$('anim-drop').classList.remove('drag'));
+  $('anim-drop').addEventListener('drop',e=>{e.preventDefault();$('anim-drop').classList.remove('drag');loadAnimations(e.dataTransfer.files)});
+  async function loadAnimations(inputs){
+    animFiles=[];let invalid=0;
+    for(const f of inputs){
+      try{
+        if(!/\\.svg$/i.test(f.name)&&f.type!=='image/svg+xml')throw Error('Format non SVG');
+        if(f.size>20*1024*1024)throw Error('Trop volumineux');
+        animFiles.push({name:f.name.replace(/\\.svg$/i,''),text:sanitize(await f.text())});
+      }catch(e){invalid++;}
+    }
+    $('anim-file-list').replaceChildren(...animFiles.map(f=>{
+      const li=document.createElement('li'),ic=document.createElement('i');ic.setAttribute('data-lucide','file-image');
+      li.append(ic,document.createTextNode(f.name+'.svg'));return li;
+    }));
+    window.lucide?.createIcons();
+    $('anim-file-status').textContent=animFiles.length+' SVG importé(s)'+(invalid?' • '+invalid+' ignoré(s)':'');
+    $('record').disabled=!animFiles.length;
   }
-  $('stop').addEventListener('click',stopRecording);
-  $('record').addEventListener('click',async()=>{
+  function delay(ms){return new Promise(resolve=>setTimeout(resolve,ms));}
+  const computedProperties=['opacity','visibility','display','fill','fill-opacity','fill-rule','stroke','stroke-width','stroke-opacity','stroke-linecap','stroke-linejoin','stroke-dasharray','stroke-dashoffset','transform','transform-origin','transform-box','filter','color','font-family','font-size','font-weight','letter-spacing','paint-order','clip-path'];
+  function snapshotSVG(original){
+    const clone=original.cloneNode(true);
+    const src=[original,...original.querySelectorAll('*')],dst=[clone,...clone.querySelectorAll('*')];
+    for(let i=0;i<src.length;i++){
+      const style=getComputedStyle(src[i]);
+      for(const prop of computedProperties){
+        const value=style.getPropertyValue(prop);
+        if(value)dst[i].style.setProperty(prop,value);
+      }
+      dst[i].style.setProperty('animation','none','important');
+      dst[i].style.setProperty('transition','none','important');
+    }
+    clone.querySelectorAll('style,animate,animateTransform,animateMotion,set,script,foreignObject').forEach(el=>el.remove());
+    return new XMLSerializer().serializeToString(clone);
+  }
+  async function paintFrame(original,ctx,w,h){
+    const blob=new Blob([snapshotSVG(original)],{type:'image/svg+xml'});
+    const url=URL.createObjectURL(blob);
     try{
-      if(!navigator.mediaDevices?.getDisplayMedia||!window.MediaRecorder)throw Error('Capture non disponible dans ce navigateur.');
-      const duration=Number($('seconds').value),fps=Number($('fps').value);
-      if(duration<1||duration>60)throw Error('Durée limitée à 1–60 s.');
-      recordStream=await navigator.mediaDevices.getDisplayMedia({video:{frameRate:fps},audio:false});
-      const chunks=[];
-      const type=['video/mp4;codecs=avc1.42E01E','video/mp4;codecs=avc1','video/mp4','video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm'].find(t=>MediaRecorder.isTypeSupported(t));
-      recorder=new MediaRecorder(recordStream,type?{mimeType:type}:undefined);
-      recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)};
-      recorder.onstop=()=>{
-        if(chunks.length){const blob=new Blob(chunks,{type:type||'video/webm'});const url=URL.createObjectURL(blob);
-          const a=document.createElement('a');a.href=url;a.download='TOIMG-animation.'+(type?.startsWith('video/mp4')?'mp4':'webm');a.click();setTimeout(()=>URL.revokeObjectURL(url),15000);
-          $('record-status').textContent=(type?.startsWith('video/mp4')?'MP4':'WebM')+' téléchargé.';}
-        else $('record-status').textContent='Aucune vidéo enregistrée.';
-      };
-      recordStream.getVideoTracks()[0].addEventListener('ended',stopRecording,{once:true});
-      recorder.start(250);$('record').disabled=true;$('stop').disabled=false;
-      $('record-status').textContent='Enregistrement '+(type?.startsWith('video/mp4')?'MP4':'WebM (MP4 indisponible dans ce navigateur)')+' en cours…';
-      recordTimer=setTimeout(stopRecording,duration*1000);
-    }catch(e){$('record-status').textContent=e.message;$('record').disabled=false;$('stop').disabled=true;}
+      const image=new Image();image.src=url;await image.decode();
+      ctx.fillStyle='#000';ctx.fillRect(0,0,w,h);
+      const iw=image.naturalWidth||w,ih=image.naturalHeight||h,scale=Math.min(w/iw,h/ih);
+      ctx.drawImage(image,(w-iw*scale)/2,(h-ih*scale)/2,iw*scale,ih*scale);
+    }finally{URL.revokeObjectURL(url);}
+  }
+  $('stop').addEventListener('click',()=>{
+    abortRecording=true;
+    if(activeRecorder&&activeRecorder.state==='recording')activeRecorder.stop();
+    if(activeStream)activeStream.getTracks().forEach(t=>t.stop());
+    $('record-status').textContent='Arrêt demandé.';
+  });
+  $('record').addEventListener('click',async()=>{
+    if(!animFiles.length)return;
+    const seconds=Number($('seconds').value),fps=Number($('fps').value);
+    const w=Number($('anim-width').value),h=Number($('anim-height').value);
+    if(!Number.isFinite(seconds)||seconds<1||seconds>60||!Number.isInteger(w)||!Number.isInteger(h)||w<64||h<64||w>3840||h>2160){
+      $('record-status').textContent='Paramètres de durée ou de dimensions invalides.';return;
+    }
+    if(!window.MediaRecorder||!HTMLCanvasElement.prototype.captureStream){$('record-status').textContent='L’enregistrement vidéo n’est pas disponible dans ce navigateur.';return;}
+    const mime=['video/mp4;codecs=avc1.42E01E','video/mp4','video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm'].find(t=>MediaRecorder.isTypeSupported(t));
+    if(!mime){$('record-status').textContent='Aucun encodeur vidéo compatible.';return;}
+    abortRecording=false;$('record').disabled=true;$('stop').disabled=false;
+    const zip=new JSZip(),failed=[];
+    for(let i=0;i<animFiles.length&&!abortRecording;i++){
+      const file=animFiles[i],stage=$('svg-stage');
+      try{
+        $('record-status').textContent='Vidéo '+(i+1)+'/'+animFiles.length+' : '+file.name;
+        stage.style.width=w+'px';stage.style.height=h+'px';stage.replaceChildren();
+        const doc=new DOMParser().parseFromString(file.text,'image/svg+xml');
+        const svg=document.importNode(doc.documentElement,true);
+        svg.style.width='100%';svg.style.height='100%';
+        stage.appendChild(svg);
+        const canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;
+        const ctx=canvas.getContext('2d',{alpha:false});
+        const stream=canvas.captureStream(0),track=stream.getVideoTracks()[0];
+        activeStream=stream;
+        const chunks=[],rec=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:4000000});
+        activeRecorder=rec;
+        rec.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)};
+        const complete=new Promise((resolve,reject)=>{rec.onstop=resolve;rec.onerror=e=>reject(e.error||Error('Encodeur vidéo'));});
+        rec.start(250);
+        const start=performance.now();let nextFrame=0;
+        while(!abortRecording&&(performance.now()-start)/1000<seconds){
+          if(performance.now()>=nextFrame){
+            await paintFrame(svg,ctx,w,h);
+            track.requestFrame?.();
+            nextFrame=performance.now()+1000/fps;
+          }
+          await delay(5);
+        }
+        if(rec.state!=='inactive')rec.stop();await complete;
+        stream.getTracks().forEach(t=>t.stop());activeRecorder=null;activeStream=null;
+        if(chunks.length&&!abortRecording){
+          const ext=mime.startsWith('video/mp4')?'mp4':'webm';
+          zip.file(file.name+'.'+ext,new Blob(chunks,{type:mime}));
+        }
+      }catch(e){failed.push(file.name+' : '+e.message);}
+      finally{stage.replaceChildren();}
+    }
+    if(!abortRecording){
+      const filesCount=Object.keys(zip.files).length;
+      if(filesCount){
+        $('record-status').textContent='Préparation du téléchargement…';
+        const first=Object.values(zip.files)[0];
+        const blob=await zip.generateAsync({type:'blob'});
+        saveBlob(blob,'TOIMG-animations.zip');
+        $('record-status').textContent=filesCount+' vidéo(s) exportée(s) en '+(mime.startsWith('video/mp4')?'MP4':'WebM')+(failed.length?' • '+failed.length+' échec(s)':'')+'.';
+      }else $('record-status').textContent='Aucune vidéo générée. '+failed.join(' | ');
+    }
+    $('record').disabled=false;$('stop').disabled=true;
   });
   window.addEventListener("load",()=>window.lucide?.createIcons());
 })();
