@@ -171,9 +171,9 @@ footer{font-size:13px;color:#7c7d87;margin-top:26px}
     animFiles=[];let invalid=0;
     for(const f of inputs){
       try{
-        if(!/\\.svg$/i.test(f.name)&&f.type!=='image/svg+xml')throw Error('Format non SVG');
+        if(!/\.svg$/i.test(f.name)&&f.type!=='image/svg+xml')throw Error('Format non SVG');
         if(f.size>20*1024*1024)throw Error('Trop volumineux');
-        animFiles.push({name:f.name.replace(/\\.svg$/i,''),text:sanitize(await f.text())});
+        animFiles.push({name:f.name.replace(/\.svg$/i,''),text:sanitize(await f.text())});
       }catch(e){invalid++;}
     }
     $('anim-file-list').replaceChildren(...animFiles.map(f=>{
