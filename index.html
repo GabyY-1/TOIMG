@@ -152,7 +152,7 @@ footer{font-size:13px;color:#7c7d87;margin-top:26px}
     $('status').textContent='Création du ZIP…';
     try{const blob=await zip.generateAsync({type:'blob',compression:'DEFLATE'});
       saveBlob(blob,'TOIMG-'+names.size+'-images.zip');
-      $('status').textContent=names.size+' PNG dans le ZIP'+(failed.length?' • '+failed.length+' échec(s) : '+failed.join(', '):''+'.';
+      $('status').textContent=names.size+' PNG dans le ZIP'+(failed.length?' • '+failed.length+' échec(s) : '+failed.join(', '):'')+'.';
     }catch(e){$('status').textContent='Impossible de créer le ZIP : '+e.message;}
     finally{$('export').disabled=false;}
   });
