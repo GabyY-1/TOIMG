@@ -100,8 +100,8 @@ footer{font-size:13px;color:#7c7d87;margin-top:26px}
     const incoming=[...input];if(!incoming.length)return;
     files=[];let errors=0;
     for(const file of incoming){
-      if((!/\\.svg$/i.test(file.name)&&file.type!=='image/svg+xml')||file.size>20*1024*1024){errors++;continue;}
-      try{files.push({name:file.name.replace(/\\.svg$/i,''),text:sanitize(await file.text())});}catch(e){errors++;}
+      if((!/\.svg$/i.test(file.name)&&file.type!=='image/svg+xml')||file.size>20*1024*1024){errors++;continue;}
+      try{files.push({name:file.name.replace(/\.svg$/i,''),text:sanitize(await file.text())});}catch(e){errors++;}
     }
     $('file-list').replaceChildren(...files.map(f=>{
       const li=document.createElement('li'),ic=document.createElement('i');
