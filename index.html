@@ -38,7 +38,7 @@ footer{font-size:13px;color:#7c7d87;margin-top:26px}
 <h1>Convertissez vos images.</h1><p class="intro">Aucun compte, aucune publicité, aucun envoi de fichier sur un serveur pour la conversion.</p>
 <div class="tabs" role="tablist" aria-label="Outils">
 <button class="tab" type="button" role="tab" aria-selected="true" data-tab="png">SVG → PNG</button>
-<button class="tab" type="button" role="tab" aria-selected="false" data-tab="anim">SVG animé → vidéo</button>
+<button class="tab" type="button" role="tab" aria-selected="false" data-tab="anim">SVG animé → MP4</button>
 <button class="tab" type="button" role="tab" aria-selected="false" data-tab="url">Image → URL <small>(à venir)</small></button>
 </div>
 <section id="png" class="panel">
@@ -59,9 +59,9 @@ footer{font-size:13px;color:#7c7d87;margin-top:26px}
 <h2>Enregistrer un SVG animé</h2>
 <p>Cette méthode enregistre le rendu réel de l'animation dans votre navigateur. Elle fonctionne aussi pour les animations CSS qui ne se convertissent pas correctement avec un simple export PNG.</p>
 <div class="notice">Cliquez sur « Enregistrer », puis choisissez <b>cet onglet</b> dans la fenêtre de partage du navigateur. L'enregistrement est local : aucune vidéo n'est envoyée à TOIMG. Le navigateur peut demander l'autorisation de partager l'écran.</div>
-<p class="note">Ouvrez d'abord votre fichier SVG animé dans un onglet du navigateur, puis revenez ici pour lancer la capture. Vous pouvez sélectionner cet onglet SVG lors du partage. La sortie est WebM. Les formats GIF et MP4 nécessiteront un encodeur supplémentaire.</p>
+<p class="note">Ouvrez d'abord votre fichier SVG animé dans un onglet du navigateur, puis revenez ici pour lancer la capture. Vous pouvez sélectionner cet onglet SVG lors du partage. Le format MP4 est utilisé lorsque votre navigateur sait l’enregistrer ; sinon un export WebM est proposé. Aucun fichier WebM n’est renommé artificiellement en MP4.</p>
 <div class="form-row"><div><label for="seconds">Durée (secondes)</label><input type="number" min="1" max="60" id="seconds" value="4"></div><div><label for="fps">Images/seconde souhaitées</label><select id="fps"><option>30</option><option>60</option><option>24</option></select></div></div>
-<div class="buttons"><button class="primary" id="record">Enregistrer la vidéo WebM</button><button class="secondary" id="stop" disabled>Arrêter</button></div>
+<div class="buttons"><button class="primary" id="record">Enregistrer la vidéo</button><button class="secondary" id="stop" disabled>Arrêter</button></div>
 <p class="status" id="record-status" aria-live="polite"></p>
 </section>
 <section id="url" class="panel hidden">
@@ -141,18 +141,18 @@ footer{font-size:13px;color:#7c7d87;margin-top:26px}
       if(duration<1||duration>60)throw Error('Durée limitée à 1–60 s.');
       recordStream=await navigator.mediaDevices.getDisplayMedia({video:{frameRate:fps},audio:false});
       const chunks=[];
-      const type=['video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm'].find(t=>MediaRecorder.isTypeSupported(t));
+      const type=['video/mp4;codecs=avc1.42E01E','video/mp4;codecs=avc1','video/mp4','video/webm;codecs=vp9','video/webm;codecs=vp8','video/webm'].find(t=>MediaRecorder.isTypeSupported(t));
       recorder=new MediaRecorder(recordStream,type?{mimeType:type}:undefined);
       recorder.ondataavailable=e=>{if(e.data.size)chunks.push(e.data)};
       recorder.onstop=()=>{
         if(chunks.length){const blob=new Blob(chunks,{type:type||'video/webm'});const url=URL.createObjectURL(blob);
-          const a=document.createElement('a');a.href=url;a.download='TOIMG-animation.webm';a.click();setTimeout(()=>URL.revokeObjectURL(url),15000);
-          $('record-status').textContent='Vidéo téléchargée.';}
+          const a=document.createElement('a');a.href=url;a.download='TOIMG-animation.'+(type?.startsWith('video/mp4')?'mp4':'webm');a.click();setTimeout(()=>URL.revokeObjectURL(url),15000);
+          $('record-status').textContent=(type?.startsWith('video/mp4')?'MP4':'WebM')+' téléchargé.';}
         else $('record-status').textContent='Aucune vidéo enregistrée.';
       };
       recordStream.getVideoTracks()[0].addEventListener('ended',stopRecording,{once:true});
       recorder.start(250);$('record').disabled=true;$('stop').disabled=false;
-      $('record-status').textContent='Enregistrement en cours…';
+      $('record-status').textContent='Enregistrement '+(type?.startsWith('video/mp4')?'MP4':'WebM (MP4 indisponible dans ce navigateur)')+' en cours…';
       recordTimer=setTimeout(stopRecording,duration*1000);
     }catch(e){$('record-status').textContent=e.message;$('record').disabled=false;$('stop').disabled=true;}
   });
