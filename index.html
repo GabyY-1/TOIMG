@@ -11,10 +11,6 @@
 <div class="layout">
 <header><div class="brand">TO<span>IMG</span></div><nav>Outils d'images • local & privé</nav></header>
 <h1>Convertissez vos images.</h1><p class="intro">Aucun compte, aucune publicité, aucun envoi de fichier sur un serveur pour la conversion.</p>
-<div class="tabs" role="tablist" aria-label="Outils">
-<button class="tab" type="button" role="tab" aria-selected="true" data-tab="png"><i data-lucide="images"></i> SVG → PNG</button>
-<button class="tab" type="button" role="tab" aria-selected="false" data-tab="anim"><i data-lucide="film"></i> SVG animé → WebM</button>
-</div>
 <section id="png" class="panel">
 <div class="grid"><div>
 <h2>Importer plusieurs SVG</h2>
@@ -28,20 +24,6 @@
 <div class="buttons"><button class="primary" id="export" disabled><i data-lucide="archive"></i> Convertir tout et télécharger le ZIP</button></div>
 <p class="status" id="status" aria-live="polite"></p>
 </div><div><h2>Aperçu</h2><div class="preview" id="preview"><span class="placeholder">Votre image apparaît ici</span></div></div></div>
-</section>
-<section id="anim" class="panel hidden">
-<h2><i data-lucide="film"></i> SVG animé → vidéo</h2>
-<p>Importe directement un ou plusieurs SVG animés. TOIMG capture le dessin vectoriel dans son propre moteur de rendu, <strong>sans enregistrer ton écran</strong>.</p>
-<div class="drop" id="anim-drop"><i data-lucide="upload-cloud"></i><strong>Choisir des SVG animés</strong><p>Ou glisser-déposer plusieurs fichiers</p></div>
-<input id="anim-file" type="file" accept=".svg,image/svg+xml" multiple hidden>
-<p class="status" id="anim-file-status" aria-live="polite">Aucun SVG animé importé.</p>
-<ul class="file-list" id="anim-file-list"></ul>
-<div class="form-row"><div><label for="seconds">Durée par fichier (secondes)</label><input type="number" min="1" max="60" id="seconds" value="4"></div><div><label for="fps">Images/seconde</label><select id="fps"><option>30</option><option>60</option><option>24</option></select></div></div>
-
-<div class="notice">Les vidéos sont exportées en WebM. La résolution est adaptée aux dimensions de chaque SVG importé.</div>
-<div class="buttons" class="buttons video-buttons"><button class="primary" id="record" disabled><i data-lucide="download"></i> Convertir et télécharger</button><button class="secondary" id="stop" disabled><i data-lucide="square"></i> Arrêter</button></div>
-<p class="status" id="record-status" aria-live="polite"></p>
-<div id="svg-stage" class="svg-stage" aria-hidden="true"></div>
 </section>
 <footer>TOIMG — Traitement local dans votre navigateur. Les performances dépendent de votre appareil.</footer>
 </div>
