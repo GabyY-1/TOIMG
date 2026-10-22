@@ -57,3 +57,5 @@ footer{font-size:13px;color:#7c7d87;margin-top:26px}
 .progress-track div{width:0;height:100%;background:#6065f4;transition:width .15s ease}
 @media(max-width:740px){header{margin-bottom:30px}.grid{grid-template-columns:1fr}.panel{padding:16px}.layout{padding:20px 14px 50px}.form-row{grid-template-columns:1fr 1fr}.automation-summary{grid-template-columns:1fr}.automation-summary div{flex-direction:row;align-items:center;justify-content:space-between}}
 .svg-stage{position:fixed;left:-10000px;top:0;width:1px;height:1px;pointer-events:none;overflow:hidden}
+
+.folder-picker{display:inline-block;cursor:pointer;text-align:center;margin:14px 0 0;font-size:14px}
