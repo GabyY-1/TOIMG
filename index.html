@@ -72,6 +72,7 @@
       <select id="automation-action">
         <option value="remove-json">Supprimer tous les fichiers JSON</option>
         <option value="keep-svg">Conserver uniquement les fichiers SVG</option>
+        <option value="split-packets">Répartir tous les fichiers en paquets</option>
       </select>
       <p class="note" id="automation-description">Les fichiers .json seront exclus du ZIP. Tous les autres fichiers et dossiers seront conservés.</p>
 
@@ -88,9 +89,8 @@
         <div><span>Fichiers à inclure</span><strong id="automation-included">0</strong></div>
         <div><span>Fichiers exclus</span><strong id="automation-excluded">0</strong></div>
       </div>
-      <label for="packet-size">Nombre de fichiers par paquet</label>
       <label for="packet-custom">Nombre de fichiers par paquet</label>
-      <input id="packet-custom" type="number" min="1" max="4000" step="1" value="100" placeholder="Ex. : 100">
+      <input id="packet-custom" type="number" min="1" max="4000" step="1" placeholder="Saisir un nombre, ex. : 100">
       <p class="note" id="packet-description">Le ZIP contiendra des dossiers Paquet-001, Paquet-002, etc., avec 100 fichiers maximum chacun.</p>
       <p class="note">Le traitement se fait dans votre navigateur. Rien n'est envoyé sur un serveur. Les fichiers d'origine ne seront pas modifiés.</p>
       <div class="buttons">
