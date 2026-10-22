@@ -199,10 +199,6 @@
   });
 
   $('automation-action').addEventListener('change', updateAutomationDescription);
-  $('packet-size').addEventListener('change', () => {
-    $('packet-custom-wrap').classList.toggle('hidden', $('packet-size').value !== 'custom');
-    updatePacketDescription();
-  });
   $('packet-custom').addEventListener('input', updatePacketDescription);
   $('automation-drop').addEventListener('click', event => {
     if (event.target.closest('label, input, button')) return;
@@ -211,7 +207,6 @@
   $('folder-input').addEventListener('change', event => setAutomationFiles(event.target.files));
 
   function packetSize() {
-    if ($('packet-size').value !== 'custom') return Number($('packet-size').value);
     const value = Number($('packet-custom').value);
     return Number.isInteger(value) && value >= 1 && value <= 4000 ? value : 0;
   }
