@@ -8,9 +8,6 @@
 <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </head>
 <body>
-<div class="layout">
-<header><div class="brand">TO<span>IMG</span></div><nav>Outils d'images • local & privé</nav></header>
-<h1>Convertissez vos images.</h1><p class="intro">Aucun compte, aucune publicité, aucun envoi de fichier sur un serveur pour la conversion.</p>
 <section id="png" class="panel">
 <div class="grid"><div>
 <h2>Importer plusieurs SVG</h2>
@@ -20,12 +17,10 @@
 
 <label for="background">Fond</label>
 <select id="background"><option value="transparent">Transparent</option><option value="white">Blanc</option><option value="black">Noir</option></select>
-<p class="note">Chaque PNG conserve les dimensions propres à son SVG importé. Les fichiers de tailles différentes sont convertis séparément.</p>
 <div class="buttons"><button class="primary" id="export" disabled><i data-lucide="archive"></i> Convertir tout et télécharger le ZIP</button></div>
 <p class="status" id="status" aria-live="polite"></p>
 </div><div><h2>Aperçu</h2><div class="preview" id="preview"><span class="placeholder">Votre image apparaît ici</span></div></div></div>
 </section>
-<footer>TOIMG — Traitement local dans votre navigateur. Les performances dépendent de votre appareil.</footer>
 </div>
 <script src="script.js" defer></script>
 </body></html>
