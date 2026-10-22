@@ -1,26 +1,105 @@
 <!doctype html>
 <html lang="fr">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#101114"><title>TOIMG — Convertisseur d'images</title>
-<link rel="stylesheet" href="style.css">
-<script defer src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
-<script defer src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#101114">
+  <title>TOIMG — Convertisseur d'images</title>
+  <link rel="stylesheet" href="style.css">
+  <script defer src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+  <script defer src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 </head>
 <body>
-<section id="png" class="panel">
-<div class="grid"><div>
-<h2>Importer plusieurs SVG</h2>
-<div class="drop" id="drop"><i data-lucide="upload-cloud"></i><strong>Choisir des fichiers SVG</strong><p>Ou glisser-déposer plusieurs fichiers ici</p></div>
-<input type="file" id="file" accept=".svg,image/svg+xml" multiple hidden>
-<p class="status" id="file-status" aria-live="polite">Aucun fichier sélectionné.</p><ul class="file-list" id="file-list"></ul>
+  <main class="layout">
+    <header>
+      <div class="brand">TO<span>IMG</span></div>
+      <nav>Outils de fichiers</nav>
+    </header>
 
-<label for="background">Fond</label>
-<select id="background"><option value="transparent">Transparent</option><option value="white">Blanc</option><option value="black">Noir</option></select>
-<div class="buttons"><button class="primary" id="export" disabled><i data-lucide="archive"></i> Convertir tout et télécharger le ZIP</button></div>
-<p class="status" id="status" aria-live="polite"></p>
-</div><div><h2>Aperçu</h2><div class="preview" id="preview"><span class="placeholder">Votre image apparaît ici</span></div></div></div>
-</section>
-</div>
-<script src="script.js" defer></script>
-</body></html>
+    <h1>Vos fichiers, simplement.</h1>
+    <p class="intro">Convertissez vos SVG ou automatisez le traitement de nombreux fichiers.</p>
+
+    <div class="tabs" role="tablist" aria-label="Outils TOIMG">
+      <button class="tab" id="tab-converter" role="tab" aria-selected="true" aria-controls="png" data-tab="png">
+        <i data-lucide="image"></i> Convertisseur
+      </button>
+      <button class="tab" id="tab-automation" role="tab" aria-selected="false" aria-controls="automation" data-tab="automation">
+        <i data-lucide="workflow"></i> Automatisation
+      </button>
+    </div>
+
+    <section id="png" class="panel" role="tabpanel" aria-labelledby="tab-converter">
+      <div class="grid">
+        <div>
+          <h2>Importer plusieurs SVG</h2>
+          <div class="drop" id="drop">
+            <i data-lucide="upload-cloud"></i>
+            <strong>Choisir des fichiers SVG</strong>
+            <p>Ou glisser-déposer plusieurs fichiers ici</p>
+          </div>
+          <input type="file" id="file" accept=".svg,image/svg+xml" multiple hidden>
+          <p class="status" id="file-status" aria-live="polite">Aucun fichier sélectionné.</p>
+          <ul class="file-list" id="file-list"></ul>
+
+          <label for="background">Fond</label>
+          <select id="background">
+            <option value="transparent">Transparent</option>
+            <option value="white">Blanc</option>
+            <option value="black">Noir</option>
+          </select>
+          <div class="buttons">
+            <button class="primary" id="export" disabled><i data-lucide="archive"></i> Convertir et télécharger le ZIP</button>
+          </div>
+          <p class="status" id="status" aria-live="polite"></p>
+        </div>
+        <div>
+          <h2>Aperçu</h2>
+          <div class="preview" id="preview"><span class="placeholder">Votre image apparaît ici</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="automation" class="panel hidden" role="tabpanel" aria-labelledby="tab-automation">
+      <div class="automation-heading">
+        <div>
+          <h2>Automatisation de fichiers</h2>
+          <p class="muted">Appliquez une opération à un dossier entier, même s'il contient des milliers de fichiers, puis récupérez le résultat dans une archive ZIP.</p>
+        </div>
+        <span class="automation-icon"><i data-lucide="files"></i></span>
+      </div>
+
+      <label for="automation-action">Opération à effectuer</label>
+      <select id="automation-action">
+        <option value="remove-json">Supprimer tous les fichiers JSON</option>
+        <option value="keep-svg">Conserver uniquement les fichiers SVG</option>
+      </select>
+      <p class="note" id="automation-description">Les fichiers .json seront exclus du ZIP. Tous les autres fichiers et dossiers seront conservés.</p>
+
+      <div class="drop automation-drop" id="automation-drop">
+        <i data-lucide="folder-up"></i>
+        <strong>Choisir le dossier Lucide</strong>
+        <p>Sélectionnez le dossier extrait contenant les milliers de fichiers.</p>
+        <button class="secondary" id="choose-folder" type="button">Parcourir les dossiers</button>
+      </div>
+      <input type="file" id="folder-input" webkitdirectory directory multiple hidden>
+      <p class="status" id="automation-file-status" aria-live="polite">Aucun dossier sélectionné.</p>
+      <div class="automation-summary hidden" id="automation-summary">
+        <div><span>Fichiers trouvés</span><strong id="automation-total">0</strong></div>
+        <div><span>Fichiers à inclure</span><strong id="automation-included">0</strong></div>
+        <div><span>Fichiers exclus</span><strong id="automation-excluded">0</strong></div>
+      </div>
+      <p class="note">Le traitement se fait dans votre navigateur. Rien n'est envoyé sur un serveur. Les fichiers d'origine ne seront pas modifiés.</p>
+      <div class="buttons">
+        <button class="primary" id="automation-run" disabled><i data-lucide="file-archive"></i> Traiter et télécharger le ZIP</button>
+      </div>
+      <div class="progress-wrap hidden" id="automation-progress-wrap">
+        <div class="progress-track"><div id="automation-progress"></div></div>
+        <p class="status" id="automation-status" aria-live="polite"></p>
+      </div>
+    </section>
+
+    <footer>TOIMG · Traitement local de vos fichiers</footer>
+  </main>
+  <script src="script.js" defer></script>
+</body>
+</html>
