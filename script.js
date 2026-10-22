@@ -213,9 +213,12 @@
 
   function updatePacketDescription() {
     const size = packetSize();
-    const count = automationFiles.filter(file => $('automation-action').value === 'remove-json'
+    const action = $('automation-action').value;
+    const count = automationFiles.filter(file => action === 'remove-json'
       ? !file.name.toLowerCase().endsWith('.json')
-      : file.name.toLowerCase().endsWith('.svg')).length;
+      : action === 'keep-svg'
+        ? file.name.toLowerCase().endsWith('.svg')
+        : true).length;
     $('packet-description').textContent = size
       ? 'Le ZIP contiendra ' + Math.ceil(count / size).toLocaleString('fr-FR') +
         ' paquet(s), avec ' + size.toLocaleString('fr-FR') +
@@ -225,9 +228,12 @@
   }
 
   function updateAutomationDescription() {
-    $('automation-description').textContent = $('automation-action').value === 'remove-json'
+    const action = $('automation-action').value;
+    $('automation-description').textContent = action === 'remove-json'
       ? 'Les fichiers .json seront exclus du ZIP. Tous les autres fichiers et dossiers seront conservés.'
-      : 'Seuls les fichiers .svg seront inclus dans le ZIP. Les autres types de fichiers seront exclus.';
+      : action === 'keep-svg'
+        ? 'Seuls les fichiers .svg seront inclus dans le ZIP. Les autres types de fichiers seront exclus.'
+        : 'Tous les fichiers seront conservés et répartis dans des dossiers Paquet-001, Paquet-002, etc.';
     updateAutomationCounts();
     updatePacketDescription();
   }
@@ -255,7 +261,9 @@
     const action = $('automation-action').value;
     const included = automationFiles.filter(file => action === 'remove-json'
       ? !file.name.toLowerCase().endsWith('.json')
-      : file.name.toLowerCase().endsWith('.svg'));
+      : action === 'keep-svg'
+        ? file.name.toLowerCase().endsWith('.svg')
+        : true);
     $('automation-total').textContent = automationFiles.length.toLocaleString('fr-FR');
     $('automation-included').textContent = included.length.toLocaleString('fr-FR');
     $('automation-excluded').textContent = (automationFiles.length - included.length).toLocaleString('fr-FR');
@@ -278,7 +286,9 @@
     const action = $('automation-action').value;
     const selected = automationFiles.filter(file => action === 'remove-json'
       ? !file.name.toLowerCase().endsWith('.json')
-      : file.name.toLowerCase().endsWith('.svg'));
+      : action === 'keep-svg'
+        ? file.name.toLowerCase().endsWith('.svg')
+        : true);
     if (!selected.length) {
       $('automation-status').textContent = 'Aucun fichier ne correspond à cette opération.';
       $('automation-progress-wrap').classList.remove('hidden');
@@ -320,7 +330,11 @@
           $('automation-status').textContent = 'Création du ZIP… ' + Math.round(metadata.percent) + '%';
         }
       );
-      const label = action === 'remove-json' ? 'sans-json' : 'svg-seulement';
+      const label = action === 'remove-json'
+        ? 'sans-json'
+        : action === 'keep-svg'
+          ? 'svg-seulement'
+          : 'tous-les-fichiers';
       const packetCount = Math.ceil(added / size);
       saveBlob(blob, 'TOIMG-' + label + '-' + size + '-par-paquet.zip');
       $('automation-progress').style.width = '100%';
