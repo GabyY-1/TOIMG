@@ -59,3 +59,6 @@ footer{font-size:13px;color:#7c7d87;margin-top:26px}
 .svg-stage{position:fixed;left:-10000px;top:0;width:1px;height:1px;pointer-events:none;overflow:hidden}
 
 .folder-picker{display:inline-block;cursor:pointer;text-align:center;margin:14px 0 0;font-size:14px}
+
+#packet-custom{width:100%;border:1px solid #d8d9e0;border-radius:9px;padding:11px;font:inherit}
+#packet-description{margin-top:10px}
