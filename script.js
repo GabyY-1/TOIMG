@@ -176,7 +176,6 @@
         stage.style.width=w+'px';stage.style.height=h+'px';stage.replaceChildren();
         const doc=new DOMParser().parseFromString(file.text,'image/svg+xml');
         const svg=document.importNode(doc.documentElement,true);
-        svg.style.width='100%';svg.style.height='100%';
         stage.appendChild(svg);
         const canvas=document.createElement('canvas');canvas.width=w;canvas.height=h;
         const ctx=canvas.getContext('2d',{alpha:false});
@@ -210,7 +209,7 @@
         $('record-status').textContent='Préparation du téléchargement…';
         const blob=await zip.generateAsync({type:'blob'});
         saveBlob(blob,'TOIMG-animations.zip');
-        $('record-status').textContent=filesCount+' vidéo(s) exportée(s) en '+'WebM'+(failed.length?' • '+failed.length+' échec(s)':'')+'.';
+        $('record-status').textContent=filesCount+' vidéo(s) exportée(s) en WebM'+(failed.length?' • '+failed.length+' échec(s)':'')+'.';
       }else $('record-status').textContent='Aucune vidéo générée. '+failed.join(' | ');
     }
     $('record').disabled=false;$('stop').disabled=true;
