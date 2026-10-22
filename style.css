@@ -26,5 +26,5 @@ footer{font-size:13px;color:#7c7d87;margin-top:26px}
 @media(max-width:740px){header{margin-bottom:30px}.grid{grid-template-columns:1fr}.panel{padding:16px}.layout{padding:20px 14px}.form-row{grid-template-columns:1fr 1fr}}
 .svg-stage{position:fixed;left:-10000px;top:0;width:1px;height:1px;pointer-events:none;overflow:hidden}
 body {
-    padding-top: 12px;
+    padding-top: 64px;
 }
