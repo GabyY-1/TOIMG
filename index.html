@@ -88,6 +88,19 @@
         <div><span>Fichiers à inclure</span><strong id="automation-included">0</strong></div>
         <div><span>Fichiers exclus</span><strong id="automation-excluded">0</strong></div>
       </div>
+      <label for="packet-size">Nombre de fichiers par paquet</label>
+      <select id="packet-size">
+        <option value="50">50 fichiers — petits paquets</option>
+        <option value="100" selected>100 fichiers — recommandé pour GitHub</option>
+        <option value="400">400 fichiers</option>
+        <option value="4000">4 000 fichiers</option>
+        <option value="custom">Personnalisé…</option>
+      </select>
+      <div id="packet-custom-wrap" class="hidden">
+        <label for="packet-custom">Fichiers par paquet (1 à 4 000)</label>
+        <input id="packet-custom" type="number" min="1" max="4000" step="1" value="100">
+      </div>
+      <p class="note" id="packet-description">Le ZIP contiendra des dossiers Paquet-001, Paquet-002, etc., avec 100 fichiers maximum chacun.</p>
       <p class="note">Le traitement se fait dans votre navigateur. Rien n'est envoyé sur un serveur. Les fichiers d'origine ne seront pas modifiés.</p>
       <div class="buttons">
         <button class="primary" id="automation-run" disabled><i data-lucide="file-archive"></i> Traiter et télécharger le ZIP</button>
