@@ -199,17 +199,42 @@
   });
 
   $('automation-action').addEventListener('change', updateAutomationDescription);
+  $('packet-size').addEventListener('change', () => {
+    $('packet-custom-wrap').classList.toggle('hidden', $('packet-size').value !== 'custom');
+    updatePacketDescription();
+  });
+  $('packet-custom').addEventListener('input', updatePacketDescription);
   $('automation-drop').addEventListener('click', event => {
     if (event.target.closest('label, input, button')) return;
     $('folder-input').click();
   });
   $('folder-input').addEventListener('change', event => setAutomationFiles(event.target.files));
 
+  function packetSize() {
+    if ($('packet-size').value !== 'custom') return Number($('packet-size').value);
+    const value = Number($('packet-custom').value);
+    return Number.isInteger(value) && value >= 1 && value <= 4000 ? value : 0;
+  }
+
+  function updatePacketDescription() {
+    const size = packetSize();
+    const count = automationFiles.filter(file => $('automation-action').value === 'remove-json'
+      ? !file.name.toLowerCase().endsWith('.json')
+      : file.name.toLowerCase().endsWith('.svg')).length;
+    $('packet-description').textContent = size
+      ? 'Le ZIP contiendra ' + Math.ceil(count / size).toLocaleString('fr-FR') +
+        ' paquet(s), avec ' + size.toLocaleString('fr-FR') +
+        ' fichier(s) maximum par dossier Paquet-001, Paquet-002, etc.'
+      : 'Entre un nombre entier compris entre 1 et 4 000.';
+    $('automation-run').disabled = !automationFiles.length || !size;
+  }
+
   function updateAutomationDescription() {
     $('automation-description').textContent = $('automation-action').value === 'remove-json'
       ? 'Les fichiers .json seront exclus du ZIP. Tous les autres fichiers et dossiers seront conservés.'
       : 'Seuls les fichiers .svg seront inclus dans le ZIP. Les autres types de fichiers seront exclus.';
     updateAutomationCounts();
+    updatePacketDescription();
   }
 
   function relativePath(file) {
@@ -228,6 +253,7 @@
     $('automation-run').disabled = !automationFiles.length;
     $('automation-progress-wrap').classList.add('hidden');
     updateAutomationCounts();
+    updatePacketDescription();
   }
 
   function updateAutomationCounts() {
@@ -242,6 +268,12 @@
 
   $('automation-run').addEventListener('click', async () => {
     if (!automationFiles.length) return;
+    const size = packetSize();
+    if (!size) {
+      $('automation-status').textContent = 'Choisis un nombre de fichiers par paquet entre 1 et 4 000.';
+      $('automation-progress-wrap').classList.remove('hidden');
+      return;
+    }
     if (!window.JSZip) {
       $('automation-status').textContent = 'La bibliothèque ZIP ne s’est pas chargée. Vérifiez votre connexion puis rechargez la page.';
       $('automation-progress-wrap').classList.remove('hidden');
@@ -271,7 +303,9 @@
         $('automation-status').textContent = 'Préparation ' + (index + 1).toLocaleString('fr-FR') +
           ' / ' + selected.length.toLocaleString('fr-FR') + ' · ' + file.name;
         try {
-          zip.file(relativePath(file), file);
+          const packetNumber = Math.floor(index / size) + 1;
+          const packetName = 'Paquet-' + String(packetNumber).padStart(3, '0');
+          zip.file(packetName + '/' + relativePath(file), file, { compression: 'STORE' });
           added++;
         } catch {
           errors++;
@@ -285,17 +319,19 @@
       if (!added) throw Error('Aucun fichier n’a pu être ajouté au ZIP.');
       $('automation-status').textContent = 'Création de l’archive ZIP…';
       const blob = await zip.generateAsync(
-        { type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 4 } },
+        { type: 'blob', compression: 'STORE' },
         metadata => {
           $('automation-progress').style.width = (70 + Math.round(metadata.percent * 0.3)) + '%';
           $('automation-status').textContent = 'Création du ZIP… ' + Math.round(metadata.percent) + '%';
         }
       );
       const label = action === 'remove-json' ? 'sans-json' : 'svg-seulement';
-      saveBlob(blob, 'TOIMG-automatisation-' + label + '.zip');
+      const packetCount = Math.ceil(added / size);
+      saveBlob(blob, 'TOIMG-' + label + '-' + size + '-par-paquet.zip');
       $('automation-progress').style.width = '100%';
       $('automation-status').textContent = 'Terminé : ' + added.toLocaleString('fr-FR') +
-        ' fichier(s) dans le ZIP' + (errors ? ' · ' + errors + ' erreur(s)' : '') + '.';
+        ' fichier(s) réparti(s) dans ' + packetCount.toLocaleString('fr-FR') + ' paquet(s) de ' +
+        size.toLocaleString('fr-FR') + ' maximum' + (errors ? ' · ' + errors + ' erreur(s)' : '') + '.';
     } catch (error) {
       $('automation-status').textContent = 'Erreur : ' + error.message;
     } finally {
