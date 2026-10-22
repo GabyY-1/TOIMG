@@ -199,9 +199,8 @@
   });
 
   $('automation-action').addEventListener('change', updateAutomationDescription);
-  $('choose-folder').addEventListener('click', () => $('folder-input').click());
   $('automation-drop').addEventListener('click', event => {
-    if (event.target.closest('button')) return;
+    if (event.target.closest('label, input, button')) return;
     $('folder-input').click();
   });
   $('folder-input').addEventListener('change', event => setAutomationFiles(event.target.files));
@@ -260,7 +259,6 @@
     }
 
     $('automation-run').disabled = true;
-    $('choose-folder').disabled = true;
     $('automation-progress-wrap').classList.remove('hidden');
     $('automation-progress').style.width = '0%';
     const zip = new JSZip();
@@ -302,7 +300,6 @@
       $('automation-status').textContent = 'Erreur : ' + error.message;
     } finally {
       $('automation-run').disabled = false;
-      $('choose-folder').disabled = false;
     }
   });
 
